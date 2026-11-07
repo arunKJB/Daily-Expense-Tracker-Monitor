@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#4f46e5">
+    <title>View Expenses | Daily Expense Tracker</title>
+    <link rel="icon" type="image/png" href="https://i.pinimg.com/736x/ff/e5/c8/ffe5c8bfff56af5eb39a3f13dd4bde26.jpg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="expense">
+
+<main class="container main-container">
+
+    <div class="page-head">
+        <div>
+            <h1>Daily Expense Details</h1>
+            <p>Filter by date, creator or type</p>
+        </div>
+        <div class="actions">
+            <button class="btn btn-danger" id="pdfBtn"><i class="fa-solid fa-file-pdf me-1"></i> <span class="d-none d-sm-inline">Download PDF</span></button>
+            <a href="index.html" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> <span class="d-none d-sm-inline">Add Expense</span></a>
+        </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="stat"><div class="stat-icon"><i class="fa-solid fa-list"></i></div>
+                <div><span>Entries (filtered)</span><h3 id="totalEntries">0</h3></div></div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="stat"><div class="stat-icon blue"><i class="fa-solid fa-calendar-day"></i></div>
+                <div><span>Today's Entries</span><h3 id="todayEntries">0</h3></div></div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="stat"><div class="stat-icon green"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                <div><span>Total (filtered)</span><h3 id="totalAmount">₹0.00</h3></div></div>
+        </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-box">
+
+        <label class="form-label"><i class="fa-regular fa-calendar me-1"></i> Date range</label>
+        <div class="chips mb-3" id="rangeChips">
+            <button type="button" class="chip active" data-range="all">All time</button>
+            <button type="button" class="chip" data-range="today">Today</button>
+            <button type="button" class="chip" data-range="yesterday">Yesterday</button>
+            <button type="button" class="chip" data-range="week">This week</button>
+            <button type="button" class="chip" data-range="month">This month</button>
+            <button type="button" class="chip" data-range="lastmonth">Last month</button>
+            <!-- <button type="button" class="chip" data-range="custom">Custom</button> -->
+        </div>
+
+        <div class="row g-3 align-items-end">
+            <div class="col-6 col-lg-2">
+                <label class="form-label" for="fromDate">From</label>
+                <input type="date" id="fromDate" class="form-control">
+            </div>
+            <div class="col-6 col-lg-2">
+                <label class="form-label" for="toDate">To</label>
+                <input type="date" id="toDate" class="form-control">
+            </div>
+            <div class="col-6 col-lg-2">
+                <label class="form-label" for="creatorFilter">Creator</label>
+                <select id="creatorFilter" class="form-select"><option value="ALL">All creators</option></select>
+            </div>
+            <div class="col-6 col-lg-2">
+                <label class="form-label" for="typeFilter">Expense type</label>
+                <select id="typeFilter" class="form-select"><option value="ALL">All types</option></select>
+            </div>
+            <div class="col-12 col-lg-4">
+                <label class="form-label" for="searchBox">Search</label>
+                <div class="search-wrap">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="search" id="searchBox" class="form-control" placeholder="Description or category...">
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+            <div class="active-filters" id="filterSummary"></div>
+            <button type="button" class="btn btn-soft btn-sm" id="clearFilterBtn"><i class="fa-solid fa-filter-circle-xmark me-1"></i> Clear filters</button>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+        <div class="table-card-head">
+            <div><h3><i class="fa-solid fa-table text-primary me-2"></i>Expenses</h3><p id="rangeText">All submitted expenses</p></div>
+            <div style="min-width:120px">
+                <select id="rowsPerPage" class="form-select form-select-sm">
+                    <option value="10">10 rows</option><option value="20">20 rows</option>
+                    <option value="30">30 rows</option><option value="50">50 rows</option><option value="100">100 rows</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="emptyMessage" class="empty-state" style="display:none">
+            <i class="fa-solid fa-receipt"></i><p class="mb-0">No expenses found for these filters.</p>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle responsive-table" id="expenseTable">
+                <thead><tr>
+                    <th>#</th><th>Creator</th><th>Date</th><th>Time</th><th>Type</th><th>Category</th><th>Description</th><th>Amount</th><th class="text-center">Action</th>
+                </tr></thead>
+                <tbody id="expenseTableBody"></tbody>
+                <tfoot>
+                    <tr><td colspan="7" class="text-end">Grand Total (filtered)</td><td id="tableGrandTotal">₹0.00</td><td></td></tr>
+                    <tr><td colspan="7" class="text-end">Current Page Total</td><td id="pageGrandTotal">₹0.00</td><td></td></tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="pager" id="pager"></div>
+    </div>
+</main>
+
+<!-- EDIT MODAL -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-solid fa-pen text-primary me-2"></i>Edit Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4"><label class="form-label">Creator</label>
+                        <select class="form-select" id="editCreator"></select></div>
+                    <div class="col-6 col-md-4"><label class="form-label">Date</label>
+                        <input type="date" class="form-control" id="editDate"></div>
+                    <div class="col-6 col-md-4"><label class="form-label">Time</label>
+                        <input type="time" class="form-control" id="editTime"></div>
+                    <div class="col-12 col-md-6"><label class="form-label">Expense type</label>
+                        <select class="form-select" id="editExpenseType"></select></div>
+                    <div class="col-12 col-md-6"><label class="form-label">Category</label>
+                        <select class="form-select" id="editCategory"></select></div>
+                    <div class="col-12 col-lg-8"><label class="form-label">Description</label>
+                        <textarea class="form-control" id="editComment" rows="3" maxlength="1000"></textarea></div>
+                    <div class="col-12 col-lg-4"><label class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="editAmount" min="0.01" step="0.01" inputmode="decimal"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="updateBtn"><i class="fa-solid fa-floppy-disk me-1"></i> Update Expense</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script src="expense.js"></script>
+</body>
+</html>
